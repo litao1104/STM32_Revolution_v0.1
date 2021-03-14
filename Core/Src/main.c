@@ -22,7 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "FreeRTOS.h"
+#include "task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +57,79 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+//?????
+#define START_TASK_PRIO		1
+//??????	
+#define START_STK_SIZE 		128  
+//????
+TaskHandle_t StartTask_Handler;
+//????
+void start_task(void *pvParameters);
+
+//?????
+#define LED0_TASK_PRIO		2
+//??????	
+#define LED0_STK_SIZE 		50  
+//????
+TaskHandle_t LED0Task_Handler;
+//????
+void led0_task(void *pvParameters);
+
+//?????
+#define LED1_TASK_PRIO		3
+//??????	
+#define LED1_STK_SIZE 		50  
+//????
+TaskHandle_t LED1Task_Handler;
+//????
+void led1_task(void *pvParameters);
+
+//????????
+void start_task(void *pvParameters)
+{
+    taskENTER_CRITICAL();           //?????
+    //??LED0??
+    xTaskCreate((TaskFunction_t )led0_task,     	
+                (const char*    )"led0_task",   	
+                (uint16_t       )LED0_STK_SIZE, 
+                (void*          )NULL,				
+                (UBaseType_t    )LED0_TASK_PRIO,	
+                (TaskHandle_t*  )&LED0Task_Handler);   
+    //??LED1??
+    xTaskCreate((TaskFunction_t )led1_task,     
+                (const char*    )"led1_task",   
+                (uint16_t       )LED1_STK_SIZE, 
+                (void*          )NULL,
+                (UBaseType_t    )LED1_TASK_PRIO,
+                (TaskHandle_t*  )&LED1Task_Handler);        
+
+    vTaskDelete(StartTask_Handler); //??????
+    taskEXIT_CRITICAL();            //?????
+}
+
+//LED0???? 
+void led0_task(void *pvParameters)
+{
+    while(1)
+    {
+        HAL_GPIO_WritePin(GPIOF,GPIO_PIN_9,GPIO_PIN_RESET);
+        vTaskDelay(500);
+			  HAL_GPIO_WritePin(GPIOF,GPIO_PIN_9,GPIO_PIN_SET);
+			  vTaskDelay(500);
+    }
+}   
+
+//LED1????
+void led1_task(void *pvParameters)
+{
+    while(1)
+    {
+        HAL_GPIO_WritePin(GPIOF,GPIO_PIN_10,GPIO_PIN_RESET);
+        vTaskDelay(500);
+        HAL_GPIO_WritePin(GPIOF,GPIO_PIN_10,GPIO_PIN_SET);
+        vTaskDelay(1500);
+    }
+}
 
 /* USER CODE END 0 */
 
@@ -90,18 +164,27 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+	//??????
+    xTaskCreate((TaskFunction_t )start_task,            //????
+                (const char*    )"start_task",          //????
+                (uint16_t       )START_STK_SIZE,        //??????
+                (void*          )NULL,                  //??????????
+                (UBaseType_t    )START_TASK_PRIO,       //?????
+                (TaskHandle_t*  )&StartTask_Handler);   //????              
+    vTaskStartScheduler();          //??????
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-        HAL_GPIO_WritePin(GPIOF,GPIO_PIN_9,GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOF,GPIO_PIN_10,GPIO_PIN_SET);
-        HAL_Delay(500);
-        HAL_GPIO_WritePin(GPIOF,GPIO_PIN_9,GPIO_PIN_SET);
-        HAL_GPIO_WritePin(GPIOF,GPIO_PIN_10,GPIO_PIN_RESET);
-        HAL_Delay(500);
+        //HAL_GPIO_WritePin(GPIOF,GPIO_PIN_9,GPIO_PIN_RESET);
+        //HAL_GPIO_WritePin(GPIOF,GPIO_PIN_10,GPIO_PIN_SET);
+        //HAL_Delay(500);
+        //HAL_GPIO_WritePin(GPIOF,GPIO_PIN_9,GPIO_PIN_SET);
+        //HAL_GPIO_WritePin(GPIOF,GPIO_PIN_10,GPIO_PIN_RESET);
+        //HAL_Delay(500);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
