@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "FreeRTOS.h"
 #include "task.h"
+#include "stdio.h"	
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,37 +58,34 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//?????
+
 #define START_TASK_PRIO		1
-//??????	
 #define START_STK_SIZE 		128  
-//????
 TaskHandle_t StartTask_Handler;
-//????
 void start_task(void *pvParameters);
 
-//?????
 #define LED0_TASK_PRIO		2
-//??????	
 #define LED0_STK_SIZE 		50  
-//????
 TaskHandle_t LED0Task_Handler;
-//????
 void led0_task(void *pvParameters);
 
-//?????
+
 #define LED1_TASK_PRIO		3
-//??????	
 #define LED1_STK_SIZE 		50  
-//????
 TaskHandle_t LED1Task_Handler;
-//????
 void led1_task(void *pvParameters);
 
-//????????
+
+#define FLOAT_TASK_PRIO		4
+#define FLOAT_STK_SIZE 		128
+TaskHandle_t FLOATTask_Handler;
+void float_task(void *pvParameters);
+
 void start_task(void *pvParameters)
 {
-    taskENTER_CRITICAL();           //?????
+  printf("STM32 Revolution V0.1");
+
+	taskENTER_CRITICAL();           //?????
     //??LED0??
     xTaskCreate((TaskFunction_t )led0_task,     	
                 (const char*    )"led0_task",   	
@@ -103,6 +101,15 @@ void start_task(void *pvParameters)
                 (UBaseType_t    )LED1_TASK_PRIO,
                 (TaskHandle_t*  )&LED1Task_Handler);        
 
+    xTaskCreate((TaskFunction_t )float_task,     
+                (const char*    )"float_task",   
+                (uint16_t       )FLOAT_STK_SIZE, 
+                (void*          )NULL,
+                (UBaseType_t    )FLOAT_TASK_PRIO,
+                (TaskHandle_t*  )&FLOATTask_Handler);  
+    vTaskDelete(StartTask_Handler); //??????
+    taskEXIT_CRITICAL();            //?????
+								
     vTaskDelete(StartTask_Handler); //??????
     taskEXIT_CRITICAL();            //?????
 }
@@ -129,6 +136,24 @@ void led1_task(void *pvParameters)
         HAL_GPIO_WritePin(GPIOF,GPIO_PIN_10,GPIO_PIN_SET);
         vTaskDelay(1500);
     }
+}
+
+void float_task(void *pvParameters)
+{
+	static float float_num=0.00;
+	while(1)
+	{
+		float_num+=0.01f;
+		printf("float_num???: %.4f\r\n",float_num);
+        vTaskDelay(1000);
+	}
+}
+
+int fputc(int ch, FILE *f)
+{ 	
+    while ((USART1->SR & 0X40) == 0);//????,??????   
+    USART1->DR = (unsigned char)ch;      
+    return ch;
 }
 
 /* USER CODE END 0 */
